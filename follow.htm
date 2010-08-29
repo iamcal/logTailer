@@ -31,50 +31,6 @@
 
 <script>
 
-function ajaxify(url, args, handler){
-
-	var req = new XMLHttpRequest();
-	var done_func = function(){
-
-		var l_f = handler;
-
-		if (req.readyState == 4){
-			if (req.status == 200){
-
-				this.onreadystatechange = null;
-				try {
-					eval('var obj = '+req.responseText);
-					l_f(obj);
-				} catch (e){
-					l_f({
-						'ok'	: 0,
-						'error'	: "Exception: "+e,
-						'src'	: req.responseText
-					});
-				}
-			}else{
-				l_f({
-					'ok'	: 0,
-					'error'	: "Non-200 HTTP status: "+req.status,
-					'debug'	: req.responseText
-				});
-			}
-		}
-	}
-
-	req.onreadystatechange = done_func;
-
-	req.open('POST', url, 1);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-	var args2 = [];
-	for (i in args){
-		args2[args2.length] = encodeURIComponent(i)+'='+encodeURIComponent(args[i]);
-	}
-
-	req.send(args2.join('&'));
-}
-
 function log_handler(url, parent){
 
 	var self = this;
@@ -82,7 +38,6 @@ function log_handler(url, parent){
 	this.url = url;
 	this.parent = parent;
 	this.screen = $('<div class="screen"></div>').appendTo(parent);
-console.log(this.screen);
 	this.screen.html('<div></div>');
 
 	this.lx = 1;
@@ -91,7 +46,7 @@ console.log(this.screen);
 	this.max_lines = 50;
 	this.idx = 0;
 
-	this.addLine = function(line){
+	this.addLine = function(line, repaint){
 
 		var id = self.lx++;
 
@@ -102,6 +57,8 @@ console.log(this.screen);
 			var dkey = self.line_keys.shift();
 			delete self.lines[dkey];
 		}
+
+		if (repaint) self.repaint();
 
 		return id;
 	};
@@ -119,35 +76,55 @@ console.log(this.screen);
 		self.screen.scrollTop(self.screen[0].scrollHeight);
 	};
 
+	this.onLoaded = function(o, success, req){
+
+		if (!o){
+			if (!req.status){
+				self.addLine('[ERROR] Can\'t connect to log server', 1);
+			}else{
+				self.addLine('[ERROR] Error from log server: '+req.status, 1);
+			}
+			return;
+		}
+
+		if (!o.ok){
+			self.addLine(o.error);
+			return;
+		}
+
+		if (o.lines){
+			for (var i=0; i<o.lines.length; i++){
+				self.addLine(o.lines[i]);
+			}
+			self.repaint();
+		}
+
+		if (o.l){
+			self.idx = o.l;
+		}
+
+		window.setTimeout(function(){ self.pumpLog(); }, 0);
+	};
+
+	this.onError = function(x){
+
+		// TODO
+		console.log('ERROR', x);
+	};
+
 	this.pumpLog = function(){
 
-		ajaxify(self.url+'?l='+self.idx, {}, function(o){
-
-			if (!o.ok){
-				self.addLine(o.error);
-				return;
-			}
-
-			if (o.lines){
-				for (var i=0; i<o.lines.length; i++){
-					self.addLine(o.lines[i]);
-				}
-				self.repaint();
-			}
-
-			if (o.l){
-				self.idx = o.l;
-			}
-
-			window.setTimeout(function(){ self.pumpLog(); }, 0);
+		$.ajax({
+			url: self.url+'?l='+self.idx,
+			success: this.onLoaded,
+			error: this.onError,
+			dataType: 'json',
 		});
 	};
 
 	this.repaint();
 	this.pumpLog();
 }
-
-var screenid = 1;
 
 var logs = {
 	'neuron3-messages' : 'http://neuron3.iamcal.com:8124/',
