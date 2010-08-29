@@ -4,9 +4,11 @@ var url = require('url');
 var cp = require('child_process');
 
 var config = {
-	files : [
-		'/var/log/messages',
-	],
+	files : {
+		'messages'	: ['/var/log/messages'],
+		'access'	: ['/var/log/httpd/access_log'],
+		'combined'	: ['/var/log/httpd/access_log', '/var/log/httpd/error_log'],
+	},
 	max_lines : 100,
 	send_on_fresh : 20,
 	idle_timeout: 10000, // 1s
@@ -16,10 +18,11 @@ var config = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function logTailer(){
+function logTailer(id){
 
 	var self = this;
 
+	this.id = id;
 	this.buffer = "";
 	this.first_line = 1;
 	this.next_line = 1;
@@ -31,7 +34,7 @@ function logTailer(){
 	//
 
 	var args = ['-F'];
-	for (var i=0; i<config.files.length; i++) args.push(config.files[i]);
+	for (var i=0; i<config.files[id].length; i++) args.push(config.files[id][i]);
 
 	this.proc = cp.spawn('tail', args);
 
@@ -136,7 +139,7 @@ sys.inherits(logTailer, process.EventEmitter);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function logServer(tailer){
+function logServer(tailers){
 
 	http.createServer(function (req, res){
 
@@ -147,6 +150,16 @@ function logServer(tailer){
 
 		var _url = url.parse(req.url, true);
 		var get = _url.query || {};
+
+		// get the bit after the slash
+		var id = _url.pathname.substr(1);
+
+		if (!tailers[id]){
+			res.end(JSON.stringify({ok: 0, error: 'log_not_found'}));
+			return;
+		}
+
+		var tailer = tailers[id];
 
 		var lines = tailer.getLines(parseInt(get.l));
 		if (lines.length){
@@ -182,6 +195,11 @@ function logServer(tailer){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var tailer = new logTailer();
-var server = new logServer(tailer);
+var tailers = {};
+
+for (var i in config.files){
+	tailers[i] = new logTailer(i);
+}
+
+var server = new logServer(tailers);
 
