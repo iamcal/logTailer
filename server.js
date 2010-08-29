@@ -3,18 +3,7 @@ var http = require('http');
 var url = require('url');
 var cp = require('child_process');
 
-var config = {
-	files : {
-		'messages'	: ['/var/log/messages'],
-		'access'	: ['/var/log/httpd/access_log'],
-		'combined'	: ['/var/log/httpd/access_log', '/var/log/httpd/error_log'],
-	},
-	max_lines : 100,
-	send_on_fresh : 20,
-	idle_timeout: 10000, // 1s
-};
-
-
+var config = require('./config').config;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
