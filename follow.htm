@@ -1,0 +1,169 @@
+<html>
+<head>
+<title>Log Tailer</title>
+<style>
+
+.screen {
+	height: 400px;
+	background-color: black;
+	padding: 4px;
+	overflow: auto;
+}
+
+.screen div {
+	padding: 0;
+	margin: 0;
+	border: 0;
+	background-color: black;
+	color: #bbb;
+	line-height: 1.2;
+	white-space: pre-wrap;
+	xfont-size: 20px;
+	font-family: monospace;
+}
+
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+</head>
+<body>
+
+<div id="screens"></div>
+
+<script>
+
+function ajaxify(url, args, handler){
+
+	var req = new XMLHttpRequest();
+	var done_func = function(){
+
+		var l_f = handler;
+
+		if (req.readyState == 4){
+			if (req.status == 200){
+
+				this.onreadystatechange = null;
+				try {
+					eval('var obj = '+req.responseText);
+					l_f(obj);
+				} catch (e){
+					l_f({
+						'ok'	: 0,
+						'error'	: "Exception: "+e,
+						'src'	: req.responseText
+					});
+				}
+			}else{
+				l_f({
+					'ok'	: 0,
+					'error'	: "Non-200 HTTP status: "+req.status,
+					'debug'	: req.responseText
+				});
+			}
+		}
+	}
+
+	req.onreadystatechange = done_func;
+
+	req.open('POST', url, 1);
+	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+	var args2 = [];
+	for (i in args){
+		args2[args2.length] = encodeURIComponent(i)+'='+encodeURIComponent(args[i]);
+	}
+
+	req.send(args2.join('&'));
+}
+
+function log_handler(url, screen_id){
+
+	var self = this;
+
+	this.url = url;
+	this.screen_id = screen_id;
+
+	this.lx = 1;
+	this.lines = {};
+	this.line_keys = [];
+	this.max_lines = 50;
+	this.idx = 0;
+
+	this.addLine = function(line){
+
+		var id = self.lx++;
+
+		self.line_keys.push(id);
+		self.lines[id] = $('<div/>').text(line).html();
+
+		if (self.line_keys.length > self.max_lines){
+			var dkey = self.line_keys.shift();
+			delete self.lines[dkey];
+		}
+
+		return id;
+	};
+
+	this.repaint = function(){
+
+		var buffer = "";
+		var l = self.line_keys.length;
+
+		for (var i=0; i<l; i++){
+			buffer += self.lines[self.line_keys[i]] + "\n";
+		}
+
+		$('#'+self.screen_id+' div').html(buffer);
+		var screen = document.getElementById(self.screen_id);
+		screen.scrollTop = screen.scrollHeight;
+	};
+
+	this.pumpLog = function(){
+
+		ajaxify(self.url+'?l='+self.idx, {}, function(o){
+
+			if (!o.ok){
+				self.addLine(o.error);
+				return;
+			}
+
+			if (o.lines){
+				for (var i=0; i<o.lines.length; i++){
+					self.addLine(o.lines[i]);
+				}
+				self.repaint();
+			}
+
+			if (o.l){
+				self.idx = o.l;
+			}
+
+			window.setTimeout(function(){ self.pumpLog(); }, 0);
+		});
+	};
+
+	this.repaint();
+	this.pumpLog();
+}
+
+var screenid = 1;
+
+var logs = {
+	'neuron3-messages' : 'http://neuron3.iamcal.com:8124/',
+};
+
+for (var i in logs){
+
+	// create the HTML screen
+
+	var id = 'screen'+screenid;
+	screenid++;
+	$('<h2></h2>').text(i).appendTo('#screens');
+	$('<div id="'+id+'" class="screen"><div></div></div>').appendTo('#screens');
+
+	new log_handler(logs[i], id);
+}
+
+</script>
+
+</body>
+</html>
