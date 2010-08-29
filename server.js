@@ -178,7 +178,7 @@ function logServer(tailers){
 
 		tailer.on('lines', listener);
 
-	}).listen(8124);
+	}).listen(config.port, config.host);
 }
 
 
