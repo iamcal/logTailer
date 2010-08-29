@@ -18,6 +18,7 @@
 	background-color: black;
 	padding: 4px;
 	overflow: auto;
+	margin-bottom: 20px;
 }
 
 .screen div {
