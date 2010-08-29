@@ -1,0 +1,42 @@
+<html>
+<head>
+	<title>Log Tailer</title>
+
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script type="text/javascript" src="follow.js"></script>
+
+	<link rel="stylesheet" type="text/css" media="all" href="follow.css" />
+</head>
+<body>
+
+<div id="screens"></div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+	//
+	// this is a list of logs we want to tail on this page
+	//
+
+	var logs = {
+		'neuron3-messages' : 'http://neuron3.iamcal.com:8124/',
+	};
+
+
+	//
+	// for each one we create a log_handler() object, passed it a title,
+	// log URL and a parent element to put the log tailer into.
+	//
+
+	for (var i in logs){
+
+		new log_handler(i, logs[i], $('#screens'));
+	}
+
+});
+
+</script>
+
+</body>
+</html>

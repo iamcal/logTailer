@@ -1,49 +1,3 @@
-<html>
-<head>
-<title>Log Tailer</title>
-<style>
-
-.header {
-	background-color: #ccc;
-	padding: 1em;
-}
-
-.header .buttons {
-	float: right;
-}
-
-.header h2 {
-	margin: 0;
-}
-
-.screen {
-	height: 400px;
-	background-color: black;
-	padding: 4px;
-	overflow: auto;
-}
-
-.screen div {
-	padding: 0;
-	margin: 0;
-	border: 0;
-	background-color: black;
-	color: #bbb;
-	line-height: 1.2;
-	white-space: pre-wrap;
-	xfont-size: 20px;
-	font-family: monospace;
-}
-
-</style>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-</head>
-<body>
-
-<div id="screens"></div>
-
-<script>
-
 function log_handler(name, url, parent){
 
 	var self = this;
@@ -196,19 +150,3 @@ function log_handler(name, url, parent){
 	this.repaint();
 	this.pumpLog();
 }
-
-var logs = {
-	'neuron3-messages' : 'http://neuron3.iamcal.com:8124/',
-};
-
-for (var i in logs){
-
-	// create the HTML screen
-
-	new log_handler(i, logs[i], $('#screens'));
-}
-
-</script>
-
-</body>
-</html>
