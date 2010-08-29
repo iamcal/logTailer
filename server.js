@@ -155,7 +155,7 @@ function logServer(tailers){
 		var id = _url.pathname.substr(1);
 
 		if (!tailers[id]){
-			res.end(JSON.stringify({ok: 0, error: 'log_not_found'}));
+			res.end(JSON.stringify({ok: 0, error: 'Log not found: '+id}));
 			return;
 		}
 
