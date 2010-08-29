@@ -2,6 +2,15 @@
 exports.config = {
 
 	//
+	// host & port for the log server to listen on.
+	// leaving the host blank will work for most setups.
+	//
+
+	host: null,
+	port: 8124,
+
+
+	//
 	// for each different log (or set of logs) you want to tail,
 	// add an item here. if the name is 'messages', then the URL
 	// will be http://{host}:{port}/messages. specify multiple
