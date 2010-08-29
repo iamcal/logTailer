@@ -75,12 +75,15 @@ function ajaxify(url, args, handler){
 	req.send(args2.join('&'));
 }
 
-function log_handler(url, screen_id){
+function log_handler(url, parent){
 
 	var self = this;
 
 	this.url = url;
-	this.screen_id = screen_id;
+	this.parent = parent;
+	this.screen = $('<div class="screen"></div>').appendTo(parent);
+console.log(this.screen);
+	this.screen.html('<div></div>');
 
 	this.lx = 1;
 	this.lines = {};
@@ -112,9 +115,8 @@ function log_handler(url, screen_id){
 			buffer += self.lines[self.line_keys[i]] + "\n";
 		}
 
-		$('#'+self.screen_id+' div').html(buffer);
-		var screen = document.getElementById(self.screen_id);
-		screen.scrollTop = screen.scrollHeight;
+		self.screen.find('div').html(buffer);
+		self.screen.scrollTop(self.screen[0].scrollHeight);
 	};
 
 	this.pumpLog = function(){
@@ -155,12 +157,8 @@ for (var i in logs){
 
 	// create the HTML screen
 
-	var id = 'screen'+screenid;
-	screenid++;
 	$('<h2></h2>').text(i).appendTo('#screens');
-	$('<div id="'+id+'" class="screen"><div></div></div>').appendTo('#screens');
-
-	new log_handler(logs[i], id);
+	new log_handler(logs[i], $('#screens'));
 }
 
 </script>
