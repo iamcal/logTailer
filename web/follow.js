@@ -75,7 +75,7 @@ function log_handler(name, url, parent){
 		}
 
 		if (!o.ok){
-			self.addLine(o.error);
+			self.addLine('[ERROR] '+o.error);
 			self.pause();
 			return;
 		}
