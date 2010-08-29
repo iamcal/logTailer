@@ -8,7 +8,7 @@ exports.config = {
 	// files to tail them together
 	//
 
-	files : {
+	log_groups : {
 		'messages'	: ['/var/log/messages'],
 		'access'	: ['/var/log/httpd/access_log'],
 		'combined'	: ['/var/log/httpd/access_log', '/var/log/httpd/error_log'],

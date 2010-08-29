@@ -23,7 +23,7 @@ function logTailer(id){
 	//
 
 	var args = ['-F'];
-	for (var i=0; i<config.files[id].length; i++) args.push(config.files[id][i]);
+	for (var i=0; i<config.log_groups[id].length; i++) args.push(config.log_groups[id][i]);
 
 	this.proc = cp.spawn('tail', args);
 
@@ -186,7 +186,7 @@ function logServer(tailers){
 
 var tailers = {};
 
-for (var i in config.files){
+for (var i in config.log_groups){
 	tailers[i] = new logTailer(i);
 }
 
