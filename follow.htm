@@ -3,6 +3,19 @@
 <title>Log Tailer</title>
 <style>
 
+.header {
+	background-color: #ccc;
+	padding: 1em;
+}
+
+.header .buttons {
+	float: right;
+}
+
+.header h2 {
+	margin: 0;
+}
+
 .screen {
 	height: 400px;
 	background-color: black;
@@ -31,20 +44,33 @@
 
 <script>
 
-function log_handler(url, parent){
+function log_handler(name, url, parent){
 
 	var self = this;
 
 	this.url = url;
 	this.parent = parent;
+	this.name = name;
+
+	this.header = $('<div class="header"></div>').appendTo(parent);
+	this.playback = $('<a href="#"></a>').text('Pause').appendTo($('<div class="buttons"></div>').appendTo(this.header));
+	this.header.append($('<h2></h2>').text(name));
 	this.screen = $('<div class="screen"></div>').appendTo(parent);
 	this.screen.html('<div></div>');
+
+	this.playback.click(function(){
+		self.clicked(); 
+		return false;
+	});
 
 	this.lx = 1;
 	this.lines = {};
 	this.line_keys = [];
 	this.max_lines = 50;
 	this.idx = 0;
+
+	this.paused = false;
+	this.inflight = null;
 
 	this.addLine = function(line, repaint){
 
@@ -78,17 +104,25 @@ function log_handler(url, parent){
 
 	this.onLoaded = function(o, success, req){
 
+		self.inflight = null;
+
+		// if we've been pause, we ignore this response - we'll
+		// send it again once we unpause
+		if (self.paused) return;
+
 		if (!o){
 			if (!req.status){
 				self.addLine('[ERROR] Can\'t connect to log server', 1);
 			}else{
 				self.addLine('[ERROR] Error from log server: '+req.status, 1);
 			}
+			self.pause();
 			return;
 		}
 
 		if (!o.ok){
 			self.addLine(o.error);
+			self.pause();
 			return;
 		}
 
@@ -103,24 +137,61 @@ function log_handler(url, parent){
 			self.idx = o.l;
 		}
 
-		window.setTimeout(function(){ self.pumpLog(); }, 0);
+		if (!self.paused){
+			window.setTimeout(function(){ self.pumpLog(); }, 0);
+		}
 	};
 
-	this.onError = function(x){
+	this.onError = function(req, status, ex){
 
-		// TODO
-		console.log('ERROR', x);
+		self.addLine('[ERROR] '+status, 1);
+		self.pause();
 	};
 
 	this.pumpLog = function(){
 
-		$.ajax({
+		self.inflight = $.ajax({
 			url: self.url+'?l='+self.idx,
 			success: this.onLoaded,
 			error: this.onError,
 			dataType: 'json',
 		});
 	};
+
+	this.pause = function(){
+
+		if (self.paused) return;
+		self.paused = true;
+
+		// make sure the request we're running now never completes
+		if (self.inflight){
+			self.inflight.success = null;
+			self.inflight.error = null;
+		}
+
+		self.playback.text('Resume');
+
+		self.addLine('--paused--', 1);
+	};
+
+	this.resume = function(){
+
+		if (!self.paused) return;
+		self.paused = false;
+
+		self.playback.text('Pause');
+		self.pumpLog();
+
+		self.addLine('--resumed--', 1);
+	}
+
+	this.clicked = function(){
+		if (self.paused){
+			self.resume();
+		}else{
+			self.pause();
+		}
+	}
 
 	this.repaint();
 	this.pumpLog();
@@ -134,8 +205,7 @@ for (var i in logs){
 
 	// create the HTML screen
 
-	$('<h2></h2>').text(i).appendTo('#screens');
-	new log_handler(logs[i], $('#screens'));
+	new log_handler(i, logs[i], $('#screens'));
 }
 
 </script>
