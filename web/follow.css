@@ -1,7 +1,7 @@
 
 .header {
 	background-color: #ccc;
-	padding: 1em;
+	padding: 0.5em;
 	font-family: sans-serif;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .screen {
-	height: 400px;
+	height: 200px;
 	background-color: black;
 	padding: 4px;
 	overflow: auto;
