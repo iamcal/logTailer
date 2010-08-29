@@ -1,6 +1,8 @@
+
 .header {
 	background-color: #ccc;
 	padding: 1em;
+	font-family: sans-serif;
 }
 
 .header .buttons {
@@ -26,6 +28,5 @@
 	color: #bbb;
 	line-height: 1.2;
 	white-space: pre-wrap;
-	xfont-size: 20px;
 	font-family: monospace;
 }
